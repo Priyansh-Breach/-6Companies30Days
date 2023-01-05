@@ -165,7 +165,70 @@ class Solution(object):
     
 #Q8 https://leetcode.com/problems/most-profitable-path-in-a-tree/
 
+import math
+from collections import deque, defaultdict
+import sys
+sys.setrecursionlimit(10**5) 
+class Solution:
+    def mostProfitablePath(self, edges: List[List[int]], bob: int, amount: List[int]) -> int:
+        graph = defaultdict(set)
+        for u, v in edges:
+            graph[u].add(v)
+            graph[v].add(u)
+        visited = set()
+        self.lvl = 0
+        self.sum = 0
+        self.max = -math.inf
+        def remove_bob_income(src, bob, lvl):
+            if src == bob:
+                self.lvl = lvl
+                amount[bob] = 0
+                return True
+            visited.add(src)
+            for child in graph[src]:
+                if child not in visited:
+                    ans = remove_bob_income(child, bob, lvl + 1)
+                    if ans:
+                        if self.lvl & 1 and lvl == (self.lvl + 1)//2:
+                            amount[src] //= 2
+                        elif lvl > (self.lvl // 2):
+                            amount[src] = 0
+                        else:
+                            self.sum += amount[src]   
+                        return True
+            return False
+        
+            visited.remove(src)
+        
+        def dfs(src, income, visited):
+            if len(graph[src]) == 1 and src != 0:
+                self.max = max(self.max, income)
+                return
+            visited.add(src)
+            for child in graph[src]:
+                if child not in visited:
+                    dfs(child, income + amount[child], visited)
+            visited.remove(src)
+                
+        remove_bob_income(0, bob, 1)
+        dfs(0, amount[0], set())
+        return self.max
+    
+                         
+
 #Q9 https://leetcode.com/problems/number-of-pairs-satisfying-inequality/
+
+from sortedcontainers import SortedList
+class Solution:
+    def numberOfPairs(self, A, B, diff):
+        l = SortedList()
+        res = 0
+        for a,b in zip(A, B):
+            res += l.bisect_right(a - b + diff)
+            l.add(a - b)
+        return res
+    
+    
 
 #Q10 https://leetcode.com/problems/shortest-unsorted-continuous-subarray/
 
@@ -192,6 +255,34 @@ class Solution(object):
     
     
 #Q11 https://leetcode.com/problems/number-of-ways-to-arrive-at-destination/
+
+class Solution:
+    def countPaths(self, n, roads):
+        G = defaultdict(list)
+        for x, y, w in roads:
+            G[x].append((y, w))
+            G[y].append((x, w))
+
+        dist = [float('inf')] * n
+        dist[0] = 0
+        cnt = [0]*n
+        cnt[0] = 1
+        heap = [(0, 0)]
+
+        while heap:
+            (min_dist, idx) = heappop(heap)
+            if idx == n-1: return cnt[idx] % (10**9 + 7)
+            for neib, weight in G[idx]:
+                candidate = min_dist + weight
+                if candidate == dist[neib]:
+                    cnt[neib] += cnt[idx]
+
+                elif candidate < dist[neib]:
+                    dist[neib] = candidate
+                    heappush(heap, (weight + min_dist, neib))
+                    cnt[neib] = cnt[idx]
+                    
+                    
 
 #Q12 https://leetcode.com/problems/longest-happy-prefix/
 
@@ -246,3 +337,14 @@ class Solution(object):
     
 
 #Q15 https://leetcode.com/problems/number-of-substrings-containing-all-three-characters/
+
+class Solution:
+    def numberOfSubstrings(self, s: str) -> int:
+        ans, lo, cnt = 0, -1, {c : 0 for c in 'abc'}
+        for hi, c in enumerate(s):
+            cnt[c] += 1
+            while all(cnt.values()):
+                ans += len(s) - hi
+                lo += 1
+                cnt[s[lo]] -= 1
+        return ans
